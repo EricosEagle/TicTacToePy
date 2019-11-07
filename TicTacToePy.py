@@ -1,31 +1,44 @@
-import copy
-import sys
+from copy import deepcopy
+from math import inf as max_score
+from sys import exit as sysexit
 
 import kivy
 from kivy.app import App
 from kivy.uix.button import Button
+from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 
 kivy.require('1.11.0')
 
+'''
+--------------- CHANGELOG --------------------
+- Made code more readable
+- Added .kv file
+- Removed unnecessary depth check
+- Updated UI
+- Added reset prompt at the end of the game
+- Converted minimax() into a wrapper for play()
+- Implemented alpha-beta pruning 
+-----------------------------------------------
+'''
+
 
 class Board(GridLayout):
 
-    MAX_VAL = float('inf')
     LENGTH = 3
-    SYMBOLS = {'human': 'X', 'computer': 'O'}    # X - Player, O - Comp
-    EMPTY = ''
-    DIFFICULTY = {'baby': 0, 'easy': 2, 'medium': 3,
-                  'hard': 5, 'impossible': LENGTH ** 2}
+    SYMBOLS = {'computer': 'O', 'human': 'X', 'empty': ''}
+    DIFFICULTY = {'baby': 0, 'easy': 2, 'medium': 4,
+                  'hard': 6, 'impossible': LENGTH ** 2}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.depth = Board.DIFFICULTY['hard']
+        self.depth = Board.DIFFICULTY['impossible']
         self.cols = Board.LENGTH
-        self.button_list = [[Button(background_color=(1, 1, 1, 1), font_size=72)
-                             for _ in range(Board.LENGTH)] for _ in range(Board.LENGTH)]
+        self.button_list = [[Cell() for _ in range(Board.LENGTH)]
+                            for _ in range(Board.LENGTH)]
+        self.popup = None
         for row in self.button_list:
             for button in row:
                 button.bind(on_release=self.on_click)
@@ -37,8 +50,7 @@ class Board(GridLayout):
         :param touch:   The button that was clicked
         """
         if not self.insert(touch, Board.SYMBOLS['human']):
-            board_list = Board.convert(self.button_list)
-            i, j = self.minimax(board_list)
+            i, j = self.minimax(Board.convert(self.button_list))
             self.insert(self.button_list[i][j], Board.SYMBOLS['computer'])
 
     def insert(self, button, symbol):
@@ -46,13 +58,10 @@ class Board(GridLayout):
         Places :symbol: on :button: and then checks if the game has ended
         :param button:  The button to place :symbol: on
         :param symbol:  The :symbol: to place
-        :param board:   A simplified version of self.button_list
         :return:        If the game has ended
         """
-        if button.disabled:
-            raise IndexError('This cell already has a value!')
         button.text = symbol
-        button.disabled = True
+        button.color = (0, 0, 1, 1) if symbol == Board.SYMBOLS['computer'] else (1, 0, 0, 1)
         button.unbind(on_release=self.on_click)
         board = Board.convert(self.button_list)
         has_won = Board.has_won(board)
@@ -71,20 +80,50 @@ class Board(GridLayout):
         """
         for row in board:
             for symbol in row:
-                if symbol == Board.EMPTY:
+                if symbol == Board.SYMBOLS['empty']:
                     return False
         return True
 
     def end_message(self, message):
         """
-        Displays an end message and exits the program.
+        Displays an end message and asks user to start a new game or exit
         :param message: The message to display
         """
         self.disabled = True
-        popup = Popup(title=message, content=Label(
-            text='Click outside to end game.'), size_hint=(0.625, 0.625))
-        popup.bind(on_dismiss=sys.exit)
-        popup.open()
+        self.popup = Popup(title=message,
+                            content=self.popup_contents(), 
+                            size_hint=(0.625, 0.625), 
+                            auto_dismiss=False)
+        self.popup.open()
+
+    def popup_contents(self):
+        """
+        Generates the contents for the end of game popup
+        :return:    The popup's contents
+        """
+        contents = BoxLayout(orientation='vertical')
+        contents.add_widget(Label(text='Would you like to play again?'))
+        buttons = BoxLayout(orientation='horizontal')
+        button_y = Button(text='Yes')
+        button_y.bind(on_release=self.reset)
+        buttons.add_widget(button_y)
+        button_n = Button(text='No')
+        button_n.bind(on_release=sysexit)
+        buttons.add_widget(button_n)
+        contents.add_widget(buttons)
+        return contents
+
+    def reset(self, touch):
+        """
+        Resets the game, called from end of game popup
+        """
+        for row in self.button_list:
+            for button in row:
+                button.text = ''
+                button.bind(on_release=self.on_click)
+        self.disabled = False
+        if self.popup:
+            self.popup.dismiss()
 
     @staticmethod
     def has_won(board):
@@ -92,27 +131,21 @@ class Board(GridLayout):
         :param board:   The board to check
         :return:        If one of the players has won
         """
-        return abs(Board.evaluate(board)) == Board.MAX_VAL
+        return abs(Board.evaluate(board)) == max_score
 
-    def minimax(self, board, depth=None):
+    def minimax(self, board):
         """
         :param board:   A simplified version of the current board
         :param depth:   How many moves the function can look ahead
         :return:        The i and j indexes of the best move
         """
-        if depth == None:
-            depth = self.depth
         options = Board.get_possibilities(board, Board.SYMBOLS['computer'])
+        alpha = -max_score
+        beta = max_score
+        depth = self.depth
         if depth <= 0:
             return Board.pick_highest(options)
-        best_board = options[0]
-        best_score = Board.play(best_board[0], 'human', depth - 1)
-        for i in range(1, len(options)):
-            score = Board.play(options[i][0], 'human', depth - 1)
-            if Board.better_move('computer', score, best_score):
-                best_board = options[i]
-                best_score = score
-        return best_board[1]
+        return Board.play(board, 'computer', alpha, beta, depth, depth)
 
     @staticmethod
     def pick_highest(options):
@@ -124,24 +157,36 @@ class Board(GridLayout):
         return options[scores.index(max(scores))][1]
 
     @staticmethod
-    def play(board, player, depth):
+    def play(board, player, alpha, beta, depth, idepth):
         """
         :param board:   A simplified version of the current board
         :param player:  The player the algorithm is playing as (Can only be a key from Board.SYMBOLS)
+                        (Note: 'computer' tells the function to maximise and 'human' tells the function to minimise)
+        :param alpha:   Lower bound for best_score
+        :param beta:    Upper bound for best_score
         :param depth:   How many moves the algorithm can look ahead
-        :return:        A tuple containing the best score for the player and the depth level it reached
+        :param idepth:  The initial depth
+        :return:        The best score or the index of the best move for :player:
         """
         val = Board.evaluate(board)
-        if abs(val) == Board.MAX_VAL or depth <= 0 or Board.is_full(board):
-            return (val, depth)
+        if abs(val) == max_score or depth == 0 or Board.is_full(board):
+            return val
         options = Board.get_possibilities(board, Board.SYMBOLS[player])
         n_player = 'computer' if player == 'human' else 'human'
-        best_score = Board.play(options[0][0], n_player, depth - 1)
+        best_index = options[0][1]
+        best_score = Board.play(options[0][0], n_player, alpha, beta, depth - 1, idepth)
         for option in options[1:]:
-            score = Board.play(option[0], n_player, depth - 1)
+            score = Board.play(option[0], n_player,alpha, beta, depth - 1, idepth)
             if Board.better_move(player, score, best_score):
+                best_index = option[1]
                 best_score = score
-        return best_score
+            if alpha < best_score and player == 'computer':
+                alpha = best_score
+            elif beta > best_score and player == 'human':
+                beta = best_score
+            if beta <= alpha:
+                break
+        return best_score if depth != idepth else best_index
 
     @staticmethod
     def better_move(player, score, best_score):
@@ -151,9 +196,8 @@ class Board(GridLayout):
         :param best_score:  The previous best score
         :return:            If :score: is better than :best_score:
         """
-        better_score = score[0] > best_score[0] if player == 'computer' else score[0] < best_score[0]
-        better_depth = score[1] > best_score[1] if score[0] == best_score[0] else False
-        return better_score or better_depth
+        better_score = score > best_score if player == 'computer' else score < best_score
+        return better_score
 
     @staticmethod
     def evaluate(board):
@@ -167,23 +211,22 @@ class Board(GridLayout):
         for line in lines:
             for i in range(len(line)):
                 if line[i] == Board.LENGTH:
-                    return Board.MAX_VAL * (-1 if i == 1 else 1)
+                    return max_score * (-1 if i == 1 else 1)
                 if line[i] == Board.LENGTH - 1 and line[1 - i] == 0:
                     two_in_row[i] += 1
         comp_score = 10 ** two_in_row[0] if two_in_row[0] > 0 else 0
-        player_score = -(10 ** (two_in_row[1] + 1)) if two_in_row[1] > 0 else 0
-        return comp_score + player_score
+        player_score = 10 ** (two_in_row[1] + 1) if two_in_row[1] > 0 else 0
+        return comp_score - player_score
 
     @staticmethod
     def check_rows(board):
         """
-        :param board:   The board or a list of rows
+        :param board:   The game board or a list of rows
         :return:        A list containing how many of each symbol is in each row in :board:
         """
         out = []
         for row in board:
-            out.append(
-                (row.count(Board.SYMBOLS['computer']), row.count(Board.SYMBOLS['human'])))
+            out.append((row.count(Board.SYMBOLS['computer']), row.count(Board.SYMBOLS['human'])))
         return out
 
     @staticmethod
@@ -220,24 +263,25 @@ class Board(GridLayout):
         :param board:   The board to insert :symbol: into
         :param symbol:  The symbol to insert into :board:
         :return:        A list of tuples containing:
-                        0 - A copy of :board: with symbol inserted into an empty spot
+                        0 - A copy of :board: with :symbol: inserted into an empty spot
                         1 - The indexes (i and j) where :symbol: was inserted
         """
         out = []
         for i in range(len(board)):
             for j in range(len(board[i])):
-                if board[i][j] == Board.EMPTY:
-                    option = copy.deepcopy(board)
+                if board[i][j] == Board.SYMBOLS['empty']:
+                    option = deepcopy(board)
                     option[i][j] = symbol
                     out.append((option, (i, j)))
         return out
 
+class Cell(Button):
+    pass
 
 class TicTacToeApp(App):
     def build(self):
         self.title = 'TicTacToePy'
         return Board()
-
 
 if __name__ == "__main__":
     TicTacToeApp().run()
