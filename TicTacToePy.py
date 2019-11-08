@@ -4,8 +4,8 @@ from sys import exit as sysexit
 
 import kivy
 from kivy.app import App
-from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
@@ -13,17 +13,30 @@ from kivy.uix.popup import Popup
 kivy.require('1.11.0')
 
 '''
---------------- CHANGELOG --------------------
-- Made code more readable
-- Added .kv file
-- Removed unnecessary depth check
-- Updated UI
-- Added reset prompt at the end of the game
-- Converted minimax() into a wrapper for play()
-- Implemented alpha-beta pruning 
------------------------------------------------
+------------------- CHANGELOG -------------------
+--------------------- v1.02 ---------------------
+Added:
+    - Added detailed changelog
+    - Added spacing between buttons
+Changed:
+    - Increased font size
+    - Changed background color to white
+    - Starting player is now changed with every new game
+--------------------- v1.01 ---------------------
+Added:
+    - Added .kv file
+    - Added reset prompt at the end of the game
+    - Implemented alpha-beta pruning
+Changed:
+    - Made code more readable
+    - Converted minimax() into a wrapper for play()
+    - Updated UI
+Removed:
+    - Removed unnecessary depth check
+--------------------- v1.0 ----------------------
+- Created main game with basic features
+-------------------------------------------------
 '''
-
 
 class Board(GridLayout):
 
@@ -34,8 +47,10 @@ class Board(GridLayout):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.depth = Board.DIFFICULTY['impossible']
+        self.first_player = 'human'
         self.cols = Board.LENGTH
+        self.spacing = 2, 2
+        self.depth = Board.DIFFICULTY['impossible']
         self.button_list = [[Cell() for _ in range(Board.LENGTH)]
                             for _ in range(Board.LENGTH)]
         self.popup = None
@@ -43,13 +58,17 @@ class Board(GridLayout):
             for button in row:
                 button.bind(on_release=self.on_click)
                 self.add_widget(button)
+        if self.first_player == 'computer':
+            i, j = self.minimax(Board.convert(self.button_list))
+            self.insert(self.button_list[i][j], Board.SYMBOLS['computer'])
 
     def on_click(self, touch):
         """
         Places the player's symbol on :touch: and generates a response
         :param touch:   The button that was clicked
         """
-        if not self.insert(touch, Board.SYMBOLS['human']):
+        game_over = self.insert(touch, Board.SYMBOLS['human'])
+        if not game_over:
             i, j = self.minimax(Board.convert(self.button_list))
             self.insert(self.button_list[i][j], Board.SYMBOLS['computer'])
 
@@ -124,6 +143,10 @@ class Board(GridLayout):
         self.disabled = False
         if self.popup:
             self.popup.dismiss()
+        self.first_player = 'computer' if self.first_player != 'computer' else 'human'
+        if self.first_player == 'computer':
+            i, j = self.minimax(Board.convert(self.button_list))
+            self.insert(self.button_list[i][j], Board.SYMBOLS['computer'])
 
     @staticmethod
     def has_won(board):
@@ -139,11 +162,11 @@ class Board(GridLayout):
         :param depth:   How many moves the function can look ahead
         :return:        The i and j indexes of the best move
         """
-        options = Board.get_possibilities(board, Board.SYMBOLS['computer'])
         alpha = -max_score
         beta = max_score
         depth = self.depth
         if depth <= 0:
+            options = Board.get_possibilities(board, Board.SYMBOLS['computer'])
             return Board.pick_highest(options)
         return Board.play(board, 'computer', alpha, beta, depth, depth)
 
@@ -176,7 +199,7 @@ class Board(GridLayout):
         best_index = options[0][1]
         best_score = Board.play(options[0][0], n_player, alpha, beta, depth - 1, idepth)
         for option in options[1:]:
-            score = Board.play(option[0], n_player,alpha, beta, depth - 1, idepth)
+            score = Board.play(option[0], n_player, alpha, beta, depth - 1, idepth)
             if Board.better_move(player, score, best_score):
                 best_index = option[1]
                 best_score = score
@@ -196,8 +219,7 @@ class Board(GridLayout):
         :param best_score:  The previous best score
         :return:            If :score: is better than :best_score:
         """
-        better_score = score > best_score if player == 'computer' else score < best_score
-        return better_score
+        return score > best_score if player == 'computer' else score < best_score
 
     @staticmethod
     def evaluate(board):
@@ -205,17 +227,16 @@ class Board(GridLayout):
         :param board:   The board to evaluate
         :return:        :board:'s score based on the number of 2 in a rows
         """
-        lines = Board.check_rows(
-            board) + Board.check_cols(board) + Board.check_diags(board)
+        lines = Board.check_rows(board) + Board.check_cols(board) + Board.check_diags(board)
         two_in_row = [0, 0]
         for line in lines:
             for i in range(len(line)):
-                if line[i] == Board.LENGTH:
+                if line[i] == Board.LENGTH: 
                     return max_score * (-1 if i == 1 else 1)
                 if line[i] == Board.LENGTH - 1 and line[1 - i] == 0:
                     two_in_row[i] += 1
         comp_score = 10 ** two_in_row[0] if two_in_row[0] > 0 else 0
-        player_score = 10 ** (two_in_row[1] + 1) if two_in_row[1] > 0 else 0
+        player_score = 2 * (10 ** two_in_row[1]) if two_in_row[1] > 0 else 0
         return comp_score - player_score
 
     @staticmethod
