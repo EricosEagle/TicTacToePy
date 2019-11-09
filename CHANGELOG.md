@@ -1,4 +1,9 @@
 # CHANGELOG
+## [Unreleased]
+### Added:
+- Added window icon
+### Changed:
+- Restructured project
 ## [v1.02] 2019-11-8
 ### Added:
 - Added detailed changelog
