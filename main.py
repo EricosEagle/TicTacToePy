@@ -13,7 +13,7 @@ def asset_path(file):
 class TicTacToeApp(App):
     def config_setup(self):
         path = os.path.dirname(os.path.realpath(__file__))
-        os.chdir(os.path.join(path, '..'))
+        os.chdir(os.path.join(path))
         self.title = 'TicTacToePy'
         self.icon = asset_path('icon.png')
 
