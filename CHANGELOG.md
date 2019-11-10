@@ -2,8 +2,10 @@
 ## [Unreleased]
 ### Added:
 - Added window icon
+- Added pip requirements file
 ### Changed:
 - Restructured project
+- Added .idea/ to .gitignore
 ## [v1.02] 2019-11-8
 ### Added:
 - Added detailed changelog
