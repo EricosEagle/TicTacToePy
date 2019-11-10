@@ -1,5 +1,5 @@
-from sys import exit as sysexit
-from minimax import SimpleBoard, minimax
+from src.minimax import SimpleBoard, minimax
+import sys
 
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
@@ -7,8 +7,8 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 
-class Board(GridLayout):
 
+class Board(GridLayout):
     LENGTH = 3
     SYMBOLS = {'computer': 'O', 'human': 'X', 'empty': ''}
     DIFFICULTY = {'baby': 0, 'easy': 2, 'medium': 4,
@@ -67,9 +67,9 @@ class Board(GridLayout):
         """
         self.disabled = True
         self.popup = Popup(title=message,
-                            content=self.popup_contents(), 
-                            size_hint=(0.625, 0.625), 
-                            auto_dismiss=False)
+                           content=self.popup_contents(),
+                           size_hint=(0.625, 0.625),
+                           auto_dismiss=False)
         self.popup.open()
 
     def popup_contents(self):
@@ -81,15 +81,15 @@ class Board(GridLayout):
         contents.add_widget(Label(text='Would you like to play again?'))
         buttons = BoxLayout(orientation='horizontal')
         button_y = Button(text='Yes')
-        button_y.bind(on_release=self.reset)
+        button_y.bind(on_release=lambda *args: self.reset())
         buttons.add_widget(button_y)
         button_n = Button(text='No')
-        button_n.bind(on_release=sysexit)
+        button_n.bind(on_release=lambda *args: sys.exit(0))
         buttons.add_widget(button_n)
         contents.add_widget(buttons)
         return contents
 
-    def reset(self, touch):
+    def reset(self):
         """
         Resets the game, called from end of game popup
         """
@@ -104,6 +104,7 @@ class Board(GridLayout):
         if self.first_player == 'computer':
             i, j = minimax(SimpleBoard(self.button_list), self.depth)
             self.insert(self.button_list[i][j], Board.SYMBOLS['computer'])
+
 
 class Cell(Button):
     pass
