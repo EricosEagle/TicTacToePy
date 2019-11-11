@@ -6,6 +6,8 @@
 ### Changed:
 - Restructured project
 - Added .idea/ to .gitignore
+### Fixed:
+- Fixed bug that made computer not win intentionally
 ## [v1.02] 2019-11-8
 ### Added:
 - Added detailed changelog

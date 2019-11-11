@@ -1,11 +1,13 @@
 from copy import deepcopy
-from math import inf as max_score
 
 LENGTH = 3
 SYMBOLS = {'computer': 'O', 'human': 'X', 'empty': ''}
 
 
 class SimpleBoard:
+
+    MAX_SCORE = 10000
+
     def __init__(self, board):
         self.__board = [[button.text for button in row] for row in board]
 
@@ -22,7 +24,7 @@ class SimpleBoard:
         return not any([symbol == SYMBOLS['empty'] for row in self.__board for symbol in row])
 
     def has_won(self):
-        return abs(evaluate(self)) == max_score
+        return abs(evaluate(self)) == SimpleBoard.MAX_SCORE
 
 
 def get_possibilities(board, symbol):
@@ -53,11 +55,11 @@ def evaluate(board):
     for line in lines:
         for i in range(len(line)):
             if line[i] == LENGTH:
-                return max_score * (-1 if i == 1 else 1)
+                return SimpleBoard.MAX_SCORE * (-1 if i == 1 else 1)
             if line[i] == LENGTH - 1 and line[1 - i] == 0:
                 two_in_row[i] += 1
-    comp_score = 10 ** two_in_row[0] if two_in_row[0] > 0 else 0
-    player_score = 2 * (10 ** two_in_row[1]) if two_in_row[1] > 0 else 0
+    comp_score = 10 * two_in_row[0]
+    player_score = 1.5 * 10 * two_in_row[1]
     return comp_score - player_score
 
 
@@ -97,8 +99,8 @@ def minimax(board, depth):
     :param depth:   How many moves the function can look ahead
     :return:        The i and j indexes of the best move
     """
-    alpha = -max_score
-    beta = max_score
+    alpha = -SimpleBoard.MAX_SCORE
+    beta = SimpleBoard.MAX_SCORE
     if depth <= 0:
         options = get_possibilities(board, SYMBOLS['computer'])
         return pick_highest(options)
@@ -126,7 +128,9 @@ def make_move(board, player, alpha, beta, depth, idepth):
     :return:        The best score or the index of the best move for :player:
     """
     val = evaluate(board)
-    if abs(val) == max_score or depth == 0 or board.is_full():
+    if abs(val) == SimpleBoard.MAX_SCORE:
+        return val * (depth + 1)
+    if depth == 0 or board.is_full():
         return val
     options = get_possibilities(board, SYMBOLS[player])
     n_player = 'computer' if player == 'human' else 'human'
