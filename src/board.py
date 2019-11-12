@@ -1,3 +1,10 @@
+"""
+Module board.py
+---------------
+
+Contains the Board class.
+This class is the layout used in the TicTacToeApp and contains the game's main functions.
+"""
 from src.minimax import SimpleBoard, minimax
 import sys
 
@@ -16,17 +23,37 @@ class Board(GridLayout):
 
     def __init__(self):
         super().__init__()
-        self.cols = Board.LENGTH
+        self.cols = self.rows = Board.LENGTH
         self.spacing = 2, 2
         self.first_player = 'human'
-        self.depth = Board.DIFFICULTY['impossible']
+        self.depth = Board.DIFFICULTY['hard']
         self.button_list = [[Cell() for _ in range(Board.LENGTH)]
                             for _ in range(Board.LENGTH)]
         self.popup = None
+        self.init_buttons()
+        self.first_move()
+
+    def init_buttons(self, reset=False):
+        """
+        Initialises/resets the button objects in self.button_list by doing the following:
+        - Binding the on_click function
+        - Setting the buttons text value to a blank string
+        - Adding the button to the Board
+        :return:    None
+        """
         for row in self.button_list:
             for button in row:
                 button.bind(on_release=self.on_click)
-                self.add_widget(button)
+                if reset:
+                    button.text = ''
+                else:
+                    self.add_widget(button)
+
+    def first_move(self):
+        """
+        Runs the first move if the first player is a computer
+        :return:    None
+        """
         if self.first_player == 'computer':
             i, j = minimax(SimpleBoard(self.button_list), self.depth)
             self.insert(self.button_list[i][j], Board.SYMBOLS['computer'])
@@ -35,6 +62,7 @@ class Board(GridLayout):
         """
         Places the player's symbol on :touch: and generates a response
         :param touch:   The button that was clicked
+        :return:        None
         """
         game_over = self.insert(touch, Board.SYMBOLS['human'])
         if not game_over:
@@ -54,16 +82,17 @@ class Board(GridLayout):
         board = SimpleBoard(self.button_list)
         has_won = board.has_won()
         is_full = board.is_full()
-        if has_won:
-            self.end_message('{} wins!'.format(symbol))
-        elif is_full:
-            self.end_message('It\'s a tie!')
+        title = '{} wins!'.format(symbol) if has_won else None
+        title = 'It\'s a tie!' if is_full else title
+        if title is not None:
+            self.end_message(title)
         return has_won or is_full
 
     def end_message(self, message):
         """
         Displays an end message and asks user to start a new game or exit
         :param message: The message to display
+        :return:        None
         """
         self.disabled = True
         self.popup = Popup(title=message,
@@ -92,18 +121,14 @@ class Board(GridLayout):
     def reset(self):
         """
         Resets the game, called from end of game popup
+        :return:    None
         """
-        for row in self.button_list:
-            for button in row:
-                button.text = ''
-                button.bind(on_release=self.on_click)
-        self.disabled = False
-        if self.popup:
+        if self.popup is not None:
             self.popup.dismiss()
+        self.disabled = False
+        self.init_buttons(reset=True)
         self.first_player = 'computer' if self.first_player != 'computer' else 'human'
-        if self.first_player == 'computer':
-            i, j = minimax(SimpleBoard(self.button_list), self.depth)
-            self.insert(self.button_list[i][j], Board.SYMBOLS['computer'])
+        self.first_move()
 
 
 class Cell(Button):

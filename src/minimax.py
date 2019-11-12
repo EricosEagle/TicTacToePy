@@ -1,3 +1,9 @@
+"""
+Module minimax.py
+-----------------
+
+This module contains the SimpleBoard class and all AI Functions
+"""
 from copy import deepcopy
 
 LENGTH = 3

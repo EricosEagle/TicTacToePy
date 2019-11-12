@@ -5,6 +5,7 @@
 - Added pip requirements file
 ### Changed:
 - Restructured project
+- Cleaned up code, added additional documentation
 - Game opens in fullscreen by default
 - Added .idea/ to .gitignore
 ### Fixed:

@@ -1,3 +1,9 @@
+"""
+Module main.py
+--------------
+
+This is the main module of the program. It contains the definition of the kivy app and configuration functions.
+"""
 import os
 from src.board import Board
 
