@@ -14,8 +14,8 @@ class Board(GridLayout):
     DIFFICULTY = {'baby': 0, 'easy': 2, 'medium': 4,
                   'hard': 6, 'impossible': LENGTH ** 2}
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self):
+        super().__init__()
         self.cols = Board.LENGTH
         self.spacing = 2, 2
         self.first_player = 'human'

@@ -5,6 +5,7 @@
 - Added pip requirements file
 ### Changed:
 - Restructured project
+- Game opens in fullscreen by default
 - Added .idea/ to .gitignore
 ### Fixed:
 - Fixed bug that made computer not win intentionally
