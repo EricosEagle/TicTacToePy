@@ -5,7 +5,8 @@ Module main.py
 This is the main module of the program. It contains the definition of the kivy app and configuration functions.
 """
 import os
-from src.board import Board
+from src.board import Board, GameMode
+from src.minimax import Player
 
 import kivy
 from kivy.app import App
@@ -27,7 +28,7 @@ class TicTacToeApp(App):
 
     def build(self):
         self.config_setup()
-        return Board()
+        return Board(game_mode=GameMode.SINGLE_PLAYER, first_player=Player.COMPUTER, difficulty='hard')
 
 
 if __name__ == "__main__":

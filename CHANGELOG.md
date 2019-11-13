@@ -2,11 +2,14 @@
 ## [Unreleased]
 ### Added:
 - Added window icon
+- Added basic multi-player support
+- Added keyword argument support to Board constructor
 - Added pip requirements file
 ### Changed:
 - Restructured project
 - Cleaned up code, added additional documentation
-- Game opens in fullscreen by default
+- Implemented Player enum instead of Board.SYMBOLS
+- Game opens in full-screen by default
 - Added .idea/ to .gitignore
 ### Fixed:
 - Fixed bug that made computer not win intentionally
