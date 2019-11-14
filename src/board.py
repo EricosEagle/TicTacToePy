@@ -113,28 +113,34 @@ class Board(GridLayout):
         :return:        None
         """
         self.disabled = True
-        self.popup = Popup(title=message,
-                           content=self.popup_contents(),
+        self.popup = Popup(title='Game Over!',
+                           content=self.popup_contents(message),
                            size_hint=(0.625, 0.625),
                            auto_dismiss=False)
         self.popup.open()
 
-    def popup_contents(self):
+    def popup_contents(self, message):
         """
         Generates the contents for the end of game popup
         :return:    The popup's contents
         """
         contents = BoxLayout(orientation='vertical')
-        contents.add_widget(Label(text='Would you like to play again?'))
+        contents.add_widget(Label(text=message))
         buttons = BoxLayout(orientation='horizontal')
-        button_y = Button(text='Yes')
+        button_y = Button(text='Play Again')
         button_y.bind(on_release=lambda *args: self.reset())
         buttons.add_widget(button_y)
-        button_n = Button(text='No')
-        button_n.bind(on_release=lambda *args: sys.exit(0))
+        button_n = Button(text='Main Menu')
+        button_n.bind(on_release=lambda *args: self.goto_menu())
         buttons.add_widget(button_n)
         contents.add_widget(buttons)
         return contents
+
+    def goto_menu(self):
+        sm = self.parent.manager
+        sm.transition.direction = 'right'
+        self.reset()
+        sm.current = 'menu'
 
     def reset(self):
         """
@@ -143,6 +149,7 @@ class Board(GridLayout):
         """
         if self.popup is not None:
             self.popup.dismiss()
+            del self.popup
         self.disabled = False
         self.init_buttons(reset=True)
         self.first_player = Player.COMPUTER if self.first_player != Player.COMPUTER else Player.HUMAN
