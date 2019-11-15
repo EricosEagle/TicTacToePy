@@ -1,5 +1,9 @@
 # CHANGELOG
 ## [Unreleased]
+### Added:
+- Added 'pop' sound when player makes a move
+### Changed:
+- Cleaned up code
 ## [v1.1] - 2019-11-14
 ### Added:
 - Added window icon
