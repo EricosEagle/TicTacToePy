@@ -7,18 +7,24 @@ This class is the layout used in the TicTacToeApp and contains the game's main f
 """
 from src.minimax import SimpleBoard, Player, minimax
 from enum import Enum
-import sys
+import os
 
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
+from kivy.core.audio import SoundLoader
 from kivy.uix.popup import Popup
 
 
 class GameMode(Enum):
     SINGLE_PLAYER = 0
     MULTI_PLAYER = 1
+
+
+class Color(Enum):
+    BLUE = (0, 0, 1, 1)
+    RED = (1, 0, 0, 1)
 
 
 class Board(GridLayout):
@@ -30,6 +36,7 @@ class Board(GridLayout):
         super().__init__()
         self.cols = self.rows = Board.LENGTH
         self.spacing = 2, 2
+        self.click_sound = SoundLoader.load(os.path.join('assets', 'click.wav'))
         self.first_player = self.current_player = kwargs.get('first_player', Player.HUMAN)
         self.game_mode = kwargs.get('game_mode', GameMode.SINGLE_PLAYER)
         self.depth = Board.DIFFICULTY[kwargs.get('difficulty', 'impossible')]
@@ -43,14 +50,14 @@ class Board(GridLayout):
         """
         Initialises/resets the button objects in self.button_list by doing the following:
         - Binding the on_click function
-        - Setting the buttons text value to a blank string
-        - Adding the button to the Board
-        :return:    None
+        - Setting the buttons text value to a blank string  (On reset)
+        - Adding the button to the Board                    (On init)
+        :param reset:   Whether to reset or initialise the buttons
+        :return:        None
         """
-        func = self.on_click_sp if self.game_mode == GameMode.SINGLE_PLAYER else self.on_click_mp
         for row in self.button_list:
             for button in row:
-                button.bind(on_release=func)
+                button.bind(on_release=self.on_click)
                 if reset:
                     button.text = ''
                 else:
@@ -62,29 +69,36 @@ class Board(GridLayout):
         :return:    None
         """
         if self.game_mode == GameMode.SINGLE_PLAYER and self.first_player == Player.COMPUTER:
-            i, j = minimax(SimpleBoard(self.button_list), self.depth)
-            self.insert(self.button_list[i][j], Player.COMPUTER.value)
+            self.computer_move()
 
-    def on_click_sp(self, touch):
+    def on_click(self, touch):
         """
-        Places the player's symbol on :touch: and then plays the computers move
-        :param touch:   The button that was clicked
+        Runs the code for the player's turn
+        :param touch:   The button that was pressed
         :return:        None
         """
-        game_over = self.insert(touch, Player.HUMAN.value)
-        if not game_over:
-            i, j = minimax(SimpleBoard(self.button_list), self.depth)
-            self.insert(self.button_list[i][j], Player.COMPUTER.value)
-
-    def on_click_mp(self, touch):
-        """
-        Places the current player's symbol on :touch: and lets the next player make their turn
-        :param touch:   The button that was clicked
-        :return:        None
-        """
+        if self.click_sound:
+            self.click_sound.play()
         game_over = self.insert(touch, self.current_player.value)
-        if not game_over:
-            self.current_player = Player.COMPUTER if self.current_player != Player.COMPUTER else Player.HUMAN
+        self.set_current_player()
+        if not game_over and self.game_mode == GameMode.SINGLE_PLAYER:
+            self.computer_move()
+
+    def computer_move(self):
+        """
+        Makes the computer's move (Single-player only)
+        :return:        None
+        """
+        i, j = minimax(SimpleBoard(self.button_list), self.depth)
+        self.insert(self.button_list[i][j], self.current_player.value)
+        self.set_current_player()
+
+    def set_current_player(self):
+        """
+        Sets the current player
+        :return:        None
+        """
+        self.current_player = Player.COMPUTER if self.current_player != Player.COMPUTER else Player.HUMAN
 
     def insert(self, button, symbol):
         """
@@ -94,14 +108,13 @@ class Board(GridLayout):
         :return:        If the game has ended
         """
         button.text = symbol
-        button.color = (0, 0, 1, 1) if symbol == Player.COMPUTER.value else (1, 0, 0, 1)
-        func = self.on_click_sp if self.game_mode == GameMode.SINGLE_PLAYER else self.on_click_mp
-        button.unbind(on_release=func)
+        button.color = Color.BLUE.value if symbol == Player.COMPUTER.value else Color.RED.value
+        button.unbind(on_release=self.on_click)
         board = SimpleBoard(self.button_list)
         has_won = board.has_won()
         is_full = board.is_full()
-        title = '{} wins!'.format(symbol) if has_won else None
-        title = 'It\'s a tie!' if is_full else title
+        title = 'It\'s a tie!' if is_full else None
+        title = '{} wins!'.format(symbol) if has_won else title
         if title is not None:
             self.end_message(title)
         return has_won or is_full
@@ -137,6 +150,10 @@ class Board(GridLayout):
         return contents
 
     def goto_menu(self):
+        """
+        Resets the game and goes to the main menu
+        :return:    None
+        """
         sm = self.parent.manager
         sm.transition.direction = 'right'
         self.reset()
@@ -149,7 +166,7 @@ class Board(GridLayout):
         """
         if self.popup is not None:
             self.popup.dismiss()
-            del self.popup
+            self.popup = None
         self.disabled = False
         self.init_buttons(reset=True)
         self.first_player = Player.COMPUTER if self.first_player != Player.COMPUTER else Player.HUMAN

@@ -1,5 +1,11 @@
 # CHANGELOG
 ## [Unreleased]
+## [v1.1.1] - 2019-11-15
+### Added:
+- Added 'pop' sound when player makes a move
+- Added README.md
+### Changed:
+- Cleaned up code
 ## [v1.1] - 2019-11-14
 ### Added:
 - Added window icon
@@ -15,7 +21,7 @@
 - Added .idea/ to .gitignore
 ### Fixed:
 - Fixed bug that made computer not win intentionally
-## [v1.02] 2019-11-08
+## [v1.0.2] 2019-11-08
 ### Added:
 - Added detailed changelog
 - Added spacing between buttons
@@ -23,7 +29,7 @@
 - Increased font size
 - Changed background color to white
 - Starting player is now changed with every new game
-## [v1.01] - 2019-11-07
+## [v1.0.1] - 2019-11-07
 ### Added:
 - Added .kv file
 - Added reset prompt at the end of the game
