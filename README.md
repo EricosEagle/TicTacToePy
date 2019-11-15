@@ -2,9 +2,9 @@
 
 ![Version 1.1](gameplay.gif)
 
-Tic-Tac-Toe created using Python 3 and Kivy 1.11
+Tic-Tac-Toe created using Python 3.7 and Kivy 1.11
 
-## Features:
+## Features
 - Single-player and multi-player modes
 - Minimax AI algorithm with Alpha-beta pruning
 - Simple UI
@@ -20,17 +20,17 @@ Kivy 1.11 does not support Python 3.8 and up (as of 2019-11-15)
 ### Windows
 1. Download the latest version of [Python](https://www.python.org/downloads/)
 2. Ensure you have the latest version of pip, wheel and setuptools: `python -m pip install --upgrade pip wheel setuptools`
-3. Install dependencies: `pip install -r window_requirements.txt`
+3. Install dependencies: `python -m pip install -r window_requirements.txt`
 
 ### Linux
 1.  Download the latest version of Python using your package manager:
 For example:
 - `sudo apt install python-3` (Debian/Ubuntu/Linux Mint)
 - `sudo pacman -S python-3`  (Arch Linux/Manjaro)
-2. Ensure you have the latest version of pip, wheel and setuptools: `python -m pip install --upgrade pip wheel setuptools`
-3. Install dependencies: `pip install -r window_requirements.txt`
+2. Ensure you have the latest version of pip, wheel and setuptools: `python-3 -m pip install --upgrade pip wheel setuptools`
+3. Install dependencies: `python-3 -m pip install -r window_requirements.txt`
 
-### Us a different OS?
+### Use a different OS?
 
 Please read the [Kivy installation guide](https://kivy.org/#download)
 
