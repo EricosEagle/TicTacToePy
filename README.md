@@ -35,7 +35,7 @@ For example:
 Please read the [Kivy installation guide](https://kivy.org/#download)
 
 ## Running the program:
-- Running from terminal: `python main.py` OR 'python-3 main.py`
+- Running from terminal: `python main.py` OR `python-3 main.py`
 - Double-click the main.py file (Windows)
 
 ## Upcoming features
